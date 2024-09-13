@@ -1,23 +1,25 @@
+using API.Extensions;
 using API.Helpers;
-using Core.Interfaces;
+using API.Middleware;
 using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddAutoMapper(typeof(MappingProfiles));
 
 builder.Services.AddControllers(); //
 
 builder.Services.AddDbContext<StoreContext>(x => 
     x.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-builder.Services.AddScoped<IProductRepo, ProductRepo>();
-builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
-builder.Services.AddAutoMapper(typeof(MappingProfiles));
+builder.Services.AddApplicationServices();
 
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerDocumentation();
+
 
 var app = builder.Build();
 
@@ -40,13 +42,19 @@ using (var scope = app.Services.CreateScope())
 }
 #endregion
 
+app.UseMiddleware<ExceptionMiddleware>();
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.UseDeveloperExceptionPage(); //
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    // app.UseDeveloperExceptionPage(); // Remove this coz we are using a custom middleware for exceptions
+    // app.UseSwagger(); // Moved out of here to enable swagger in production
+    // app.UseSwaggerUI(); // Moved out of here to enable swagger in production
 }
+
+
+// In the event a request comes but we don't have an endpoint matching it, it will be redirected to errors
+app.UseStatusCodePagesWithReExecute("/errors/{0}");
 
 app.UseHttpsRedirection();
 
@@ -55,6 +63,9 @@ app.UseRouting();
 app.UseStaticFiles();
 
 app.UseAuthorization(); //
+
+app.UseSwaggerDocumentation();
+
 app.MapControllers(); //
 // app.UseEndpoints(endpoints =>
 // {
