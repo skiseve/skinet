@@ -7,11 +7,12 @@ namespace API.Controllers
     //[ApiController, Route("")]
     [ApiController]
     [Route("api/[controller]")]
-    public class ProductsControllerOLD : ControllerBase
+    [ApiExplorerSettings(IgnoreApi = true)]
+    public class ProductsOLDController : ControllerBase
     {
         private readonly IProductRepo _repo;
 
-        public ProductsControllerOLD(IProductRepo repo)
+        public ProductsOLDController(IProductRepo repo)
         {
             _repo = repo;            
         }
